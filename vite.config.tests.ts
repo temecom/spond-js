@@ -1,9 +1,19 @@
 // vite.config.tests.ts
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import * as fs from 'fs';
 
 export default defineConfig({
   plugins: [
+    {
+      name: 'append-footer',
+      closeBundle() {
+        const filePath = resolve(__dirname, 'dist/tests.js');
+        if (fs.existsSync(filePath)) {
+          fs.appendFileSync(filePath, '\nfunction test() { return runTestInternal(); }');
+        }
+      }
+    }
   ],
   build: {
     target: 'es2017',
@@ -30,8 +40,6 @@ export default defineConfig({
             if (id.includes('src/')) return 'SpondJS'; 
             return id;
         },
-        // Add a footer to expose the function to GAS UI
-        footer: 'function test() { return runTestInternal(); }'
       },
     }
   },
