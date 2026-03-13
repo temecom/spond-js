@@ -34,31 +34,31 @@ export class GASLogger implements ILogger {
 
     log(message: string): void {
         if (this.level <= LogLevel.DEBUG) {
-            Logger.log(message);
+            console.log(message);
         }
     }
 
     error(message: string): void {
         if (this.level <= LogLevel.ERROR) {
-            Logger.log(`ERROR: ${message}`);
+            console.error(`ERROR: ${message}`);
         }
     }
 
     warn(message: string): void {
         if (this.level <= LogLevel.WARN) {
-            Logger.log(`WARN: ${message}`);
+            console.warn(`WARN: ${message}`);
         }
     }
 
     info(message: string): void {
         if (this.level <= LogLevel.INFO) {
-            Logger.log(`INFO: ${message}`);
+            console.info(`INFO: ${message}`);
         }
     }
 
     debug(message: string): void {
         if (this.level <= LogLevel.DEBUG) {
-            Logger.log(`DEBUG: ${message}`);
+            console.debug(`DEBUG: ${message}`);
         }
     }
 }
