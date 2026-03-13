@@ -11,6 +11,7 @@ export interface ILogger {
     error(message: string): void;
     warn?(message: string): void;
     info?(message: string): void;
+    debug?(message: string): void;
 }
 
 export function getLogLevel(level: string): LogLevel {
@@ -54,6 +55,12 @@ export class GASLogger implements ILogger {
             Logger.log(`INFO: ${message}`);
         }
     }
+
+    debug(message: string): void {
+        if (this.level <= LogLevel.DEBUG) {
+            Logger.log(`DEBUG: ${message}`);
+        }
+    }
 }
 
 export class ConsoleLogger implements ILogger {
@@ -84,6 +91,12 @@ export class ConsoleLogger implements ILogger {
     info(message: string): void {
         if (this.level <= LogLevel.INFO) {
             console.info(message);
+        }
+    }
+
+    debug(message: string): void {
+        if (this.level <= LogLevel.DEBUG) {
+            console.debug(message);
         }
     }
 }

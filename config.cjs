@@ -30,7 +30,7 @@ module.exports = {
       name: 'node',
     },
     version: 'TEST-0.0.0',
-    logLevel: 'DEBUG', // Override for tests
+    logLevel: 'INFO', // Override for tests
   }
 
 };
