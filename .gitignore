@@ -3,3 +3,7 @@ dist
 .env
 .secrets
 .secrets.json
+package-lock.json
+yarn.lock
+.clasp.jsonsecrets.js
+secrets.cjs

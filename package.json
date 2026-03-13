@@ -4,24 +4,40 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "clean": "rm -rf dist/*",
+    "copy:manifest": "cp public/appsscript.json dist/",
+    "build:base": "npm run build:prod",
+    "build:vendor": "vite build -c vite.config.vendor.ts",
+    "build:config": "vite build -c vite.config.configuration.ts",
+    "build:tests": "vite build -c vite.config.tests.ts",
+    "build:app": "tsc --noEmit && vite build",
+    "build:app:node": "tsc --noEmit && PLATFORM=node vite build",
+    "build:dev": "npm run clean && npm run build:vendor -- --mode development && npm run build:config -- --mode development && npm run build:tests -- --mode development && npm run build:app -- --mode development && npm run copy:manifest",
+    "build:prod": "npm run clean && npm run build:vendor -- --mode production && npm run build:config -- --mode production && npm run build:tests -- --mode production && npm run build:app -- --mode production && npm run copy:manifest",
+    "deploy:dev": "node deploy.js dev",
+    "deploy:prod": "node deploy.js prod",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "test": "ts-node tests/test.ts"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
+    "@google/clasp": "^3.3.0",
+    "@types/google-apps-script": "^2.0.8",
     "@types/node": "^25.4.0",
     "@types/tough-cookie": "^4.0.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "url-polyfill": "^1.1.14",
+    "vite": "^6.4.1",
+    "vite-plugin-node-polyfills": "^0.25.0"
   },
   "dependencies": {
     "axios": "^1.13.6",
     "dotenv": "^17.3.1",
-    "tough-cookie": "^6.0.0"
+    "tough-cookie": "^6.0.1"
   }
 }

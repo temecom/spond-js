@@ -1,6 +1,6 @@
-import { SpondBase, requireAuthentication, JSONDict, AuthenticationError } from './base';
-import { EVENT_TEMPLATE, EventTemplate } from './eventTemplate';
-import { AxiosResponse } from 'axios';
+import { SpondBase, requireAuthentication, AuthenticationError } from './base';
+import type { JSONDict } from './base';
+import { EVENT_TEMPLATE, type EventTemplate } from './eventTemplate';
 
 export class Spond extends SpondBase {
     private static readonly API_BASE_URL = "https://api.spond.com/core/v1/";
@@ -21,11 +21,18 @@ export class Spond extends SpondBase {
     }
 
     private async loginChat(): Promise<void> {
-        const apiChatUrl = `${this.apiUrl}chat`;
+        const apiChatUrl = `chat`;
         const r = await this.client.post(apiChatUrl, {}, { headers: this.authHeaders });
         const result = r.data;
-        this.chatUrl = result["url"];
+        this.chatUrl = result["url"]; // assuming response has url
         this.auth = result["auth"];
+    }
+
+    // Helper to get auth headers for chat API which uses a different scheme
+    private get chatAuthHeaders(): Record<string, string> {
+        return {
+            "auth": this.auth || ""
+        };
     }
 
     @requireAuthentication
@@ -94,7 +101,7 @@ export class Spond extends SpondBase {
         }
         const url = `${this.chatUrl}/chats/`;
         const r = await this.client.get(url, {
-            headers: { "auth": this.auth },
+            headers: { "auth": this.auth || "" },
             params: { "max": maxChats.toString() }
         });
         this.messages = r.data;
@@ -108,7 +115,7 @@ export class Spond extends SpondBase {
         }
         const url = `${this.chatUrl}/messages`;
         const data = { "chatId": chatId, "text": text, "type": "TEXT" };
-        const r = await this.client.post(url, data, { headers: { "auth": this.auth } });
+        const r = await this.client.post(url, data, { headers: { "auth": this.auth || "" } });
         return r.data;
     }
 
@@ -142,7 +149,7 @@ export class Spond extends SpondBase {
             "recipient": userUid,
             "groupId": groupUid,
         };
-        const r = await this.client.post(url, data, { headers: { "auth": this.auth } });
+        const r = await this.client.post(url, data, { headers: { "auth": this.auth || "" } });
         return r.data;
     }
 
@@ -210,13 +217,13 @@ export class Spond extends SpondBase {
     }
 
     @requireAuthentication
-    async getEventAttendanceXlsx(uid: string): Promise<Buffer> {
+    async getEventAttendanceXlsx(uid: string): Promise<any> { // Returning any/Blob to avoid Buffer dependency
         const url = `${this.apiUrl}sponds/${uid}/export`;
         const r = await this.client.get(url, { 
             headers: this.authHeaders,
-            responseType: 'arraybuffer'
+            responseType: 'blob'
         });
-        return Buffer.from(r.data);
+        return r.data;
     }
 
     @requireAuthentication

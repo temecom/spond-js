@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { CookieJar } from 'tough-cookie';
+import { HttpClient, Response } from './http-client';
+import { createHttpClient } from './client-factory';
 
 export class AuthenticationError extends Error {
     constructor(message: string) {
@@ -40,56 +40,64 @@ export abstract class SpondBase {
     protected username?: string;
     protected password?: string;
     protected apiUrl: string;
-    protected client: AxiosInstance;
+    protected client: HttpClient;
     public token: string | null = null;
-    protected cookieJar: CookieJar;
+    protected cookies: Map<string, string>;
 
     constructor(username: string, password: string, apiUrl: string) {
         this.username = username;
         this.password = password;
         this.apiUrl = apiUrl;
-        this.cookieJar = new CookieJar();
+        this.cookies = new Map<string, string>();
 
-        this.client = axios.create({
+        this.client = createHttpClient({
             baseURL: this.apiUrl,
         });
 
         // Add request interceptor to attach cookies
-        this.client.interceptors.request.use(async (config) => {
+        // @ts-ignore
+        this.client.interceptors.request.use(async (config: any) => {
             // Attach bearer token if exists
             if (this.token) {
+                config.headers = config.headers || {};
                 config.headers['Authorization'] = `Bearer ${this.token}`;
             }
             
             // Attach cookies
-            // Note: In browser environments this is handled automatically. 
-            // In Node, we must manage the Cookie header manually or use an agent.
-            // Since we are mocking aiohttp behavior, we'll use tough-cookie.
-            const url = config.url ? (config.url.startsWith('http') ? config.url : `${config.baseURL || ''}${config.url}`) : '';
-            if (url) {
-                const cookieString = await this.cookieJar.getCookieString(url);
-                if (cookieString) {
-                    config.headers['Cookie'] = cookieString;
-                }
+            if (this.cookies.size > 0) {
+                const cookieParts: string[] = [];
+                this.cookies.forEach((value, key) => {
+                    cookieParts.push(`${key}=${value}`);
+                });
+                const cookieString = cookieParts.join('; ');
+                config.headers = config.headers || {};
+                config.headers['Cookie'] = cookieString;
             }
             
+            config.headers = config.headers || {};
             config.headers['Content-Type'] = 'application/json';
             return config;
         });
 
         // Add response interceptor to store cookies
-        this.client.interceptors.response.use(async (response) => {
-            const setCookie = response.headers['set-cookie'];
-            if (setCookie && response.config.url) {
-                const url = response.config.url.startsWith('http') ? response.config.url : `${response.config.baseURL || ''}${response.config.url}`;
-                 // setCookie can be a string or array of strings
-                if (Array.isArray(setCookie)) {
-                    for (const cookie of setCookie) {
-                        await this.cookieJar.setCookie(cookie, url);
+        // @ts-ignore
+        this.client.interceptors.response.use(async (response: any) => {
+            const headers = response.headers || {};
+            // Handle case-insensitive headers if needed, but GAS usually returns standard casing or lower-case depending on run
+            // Let's check typical keys
+            const setCookie = headers['Set-Cookie'] || headers['set-cookie'];
+            
+            if (setCookie) {
+                const cookiesToSet = Array.isArray(setCookie) ? setCookie : [setCookie];
+                cookiesToSet.forEach((cookieStr: string) => {
+                    // Simple parsing: NAME=VALUE; Path=...
+                    const firstPart = cookieStr.split(';')[0];
+                    const [key, ...valParts] = firstPart.split('=');
+                    const value = valParts.join('=');
+                    if (key && value) {
+                        this.cookies.set(key.trim(), value.trim());
                     }
-                } else if (typeof setCookie === 'string') {
-                    await this.cookieJar.setCookie(setCookie, url);
-                }
+                });
             }
             return response;
         });
@@ -103,11 +111,11 @@ export abstract class SpondBase {
     }
 
     public async login(): Promise<void> {
-        const loginUrl = `${this.apiUrl}login`;
+        const loginUrl = `login`;
         const data = { email: this.username, password: this.password };
 
         try {
-            const r: AxiosResponse = await this.client.post(loginUrl, data);
+            const r: Response = await this.client.post(loginUrl, data);
             const loginResult = r.data;
             this.token = loginResult.loginToken;
 

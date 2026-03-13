@@ -1,0 +1,10 @@
+{
+  "scriptId": "1j-7G4pQyT6AGnpQi44uvlCPkeYvHHnlI7mLYVkhATYdYndUkLKYmsvQo",
+  "rootDir": "dist",
+  "filePushOrder": [
+    "dependencies.js",
+    "configuration.js",
+    "spond.js",
+    "tests.js"
+  ]
+}
