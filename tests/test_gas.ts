@@ -1,17 +1,9 @@
 // Entry point for GAS tests
+import './polyfills'; // Ensure polyfills are loaded
 import { Tester } from './Tester';
 import { TestContext, Logger, TestConfig } from './types';
 import * as configuration from '../src/configuration';
-
-// GAS Logger implementation
-class GASLogger implements Logger {
-    log(message: string): void {
-        console.log(message); // Redirects to Stackdriver logging in GAS V8
-    }
-    error(message: string): void {
-        console.error(message);
-    }
-}
+import { GASLogger, getLogLevel } from '../src/logger';
 
 // Config wrapper using the bundled configuration object
 class GASConfig implements TestConfig {
@@ -40,13 +32,19 @@ class GASConfig implements TestConfig {
 // Global function to be triggered from GAS UI
 // @ts-ignore
 globalThis.runTestInternal = async function() {
-    const logger = new GASLogger();
+    // Get log level from config if available
+    const config = (configuration as any).config || {};
+    const envConfig = config.development || config || {};
+    const logLevelStr = envConfig.logLevel || 'INFO';
+    const logLevel = getLogLevel(logLevelStr);
+
+    const logger = new GASLogger(logLevel);
     // Use the imported configuration object
-    const config = new GASConfig(configuration); 
+    const configWrapper = new GASConfig(configuration); 
     
     const context: TestContext = {
-        logger,
-        config
+        logger: logger,
+        config: configWrapper
     };
 
     const tester = new Tester(context);

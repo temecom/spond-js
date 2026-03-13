@@ -8,13 +8,20 @@ if (!env || !['dev', 'prod'].includes(env)) {
   process.exit(1);
 }
 
-const deployConfig = config[env];
+const envMap = {
+  'dev': 'development',
+  'prod': 'production'
+};
+
+const configKey = envMap[env];
+const deployConfig = config[configKey];
+
 if (!deployConfig) {
   console.error(`Error: Configuration for environment '${env}' not found.`);
   process.exit(1);
 }
 
-const deploymentId = deployConfig.deploymentId;
+const deploymentId = deployConfig.platform?.deploymentId;
 if (!deploymentId) {
   console.error(`Error: Deployment ID not found for environment '${env}'.`);
   process.exit(1);
